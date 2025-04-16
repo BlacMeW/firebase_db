@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_db/services/location_service.dart';
@@ -11,7 +12,7 @@ class GpsUpdateScreen extends StatefulWidget {
 
 class _GpsUpdateScreenState extends State<GpsUpdateScreen> {
   final locationService = LocationService();
-  final String userId = "user_001"; // တကယ်လိုအပ်ရင် FirebaseAuth ထဲက ယူ
+  final String userId = FirebaseAuth.instance.currentUser?.uid ?? "guest_user";
 
   bool _loading = false;
   String? _status;
