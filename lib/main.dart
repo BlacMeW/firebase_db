@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_db/screens/gps_update_screen.dart';
 import 'package:firebase_db/screens/login_screen.dart';
 import 'package:firebase_db/services/auth_service.dart';
 import 'package:flutter/material.dart';
@@ -190,6 +191,15 @@ class _UserScreenState extends State<UserScreen> {
                 },
               ),
             ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const GpsUpdateScreen()),
+                );
+              },
+              child: Text('Go to GPS Update Screen'),
+            )
           ],
         ),
       ),
