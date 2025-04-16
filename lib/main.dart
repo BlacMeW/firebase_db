@@ -5,14 +5,53 @@ import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  print("Firebase apps count: ${Firebase.apps.length}");
+  // await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  // if (Firebase.apps.isEmpty) {
+  //   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  // }
+
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
+
+  final Future<FirebaseApp> _initialization = Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   @override
+  // Widget build(BuildContext context) {
+  //   return MaterialApp(title: 'Firebase CRUD', home: UserScreen());
+  // }
   Widget build(BuildContext context) {
-    return MaterialApp(title: 'Firebase CRUD', home: UserScreen());
+    return FutureBuilder(
+      future: _initialization,
+      builder: (context, snapshot) {
+        // Error check
+        if (snapshot.hasError) {
+          print('Firebase init error: ${snapshot.error}');
+          return MaterialApp(
+            home: Scaffold(
+              body: Center(child: Text('Firebase init failed')),
+            ),
+          );
+        }
+
+        // Done initializing
+        if (snapshot.connectionState == ConnectionState.done) {
+          return MaterialApp(
+            home: UserScreen(),
+          );
+        }
+
+        // Still loading
+        return MaterialApp(
+          home: Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          ),
+        );
+      },
+    );
   }
 }
 
