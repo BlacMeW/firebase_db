@@ -1,4 +1,5 @@
 import 'package:firebase_db/screens/user_screen.dart';
+import 'package:firebase_db/ui/homescreen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -12,11 +13,11 @@ import 'blocs/auth/auth_bloc.dart';
 import 'blocs/user_crud/user_crud_bloc.dart';
 import 'screens/login_screen.dart';
 import 'screens/gps_update_screen.dart';
-// import 'screens/user_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Initialize Firebase if not already done
   if (Firebase.apps.isEmpty) {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   }
@@ -25,15 +26,15 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
+  // Initialize AuthService just once
   final AuthService _authService = AuthService();
 
   @override
   Widget build(BuildContext context) {
-    final AuthService authService = AuthService();
     return MultiBlocProvider(
       providers: [
         BlocProvider<AuthBloc>(
-          create: (_) => AuthBloc(authService: authService)..add(AuthCheckRequested()),
+          create: (_) => AuthBloc(authService: _authService)..add(AuthCheckRequested()),
         ),
         BlocProvider<UserCrudBloc>(
           create: (_) => UserCrudBloc()..add(LoadUsers()),
@@ -48,20 +49,31 @@ class MyApp extends StatelessWidget {
 }
 
 class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AuthBloc, AuthState>(
-      builder: (context, state) {
-        if (state is AuthLoading) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) {
+        // Debugging prints to track the flow
+        if (state is AuthSignedOut) {
+          print("User is signed out");
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const LoginScreen()),
           );
         } else if (state is AuthSuccess) {
-          return UserScreen();
-        } else {
-          return LoginScreen();
+          print("AuthSuccess: Navigating to UserScreen");
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => UserScreen()),
+          );
+        } else if (state is AuthFailure) {
+          print("AuthFailure: ${state.message}");
         }
       },
+      child: const Scaffold(
+        body: Center(child: CircularProgressIndicator()), // Or a SplashScreen widget
+      ),
     );
   }
 }
+

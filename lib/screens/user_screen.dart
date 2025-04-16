@@ -35,6 +35,7 @@ class _UserFormState extends State<UserForm> {
   final nameController = TextEditingController();
   String? selectedKey;
 
+  // Create or Update a User based on selectedKey
   void saveUser(BuildContext context) {
     final name = nameController.text.trim();
     if (name.isEmpty) return;
@@ -49,6 +50,7 @@ class _UserFormState extends State<UserForm> {
     setState(() => selectedKey = null);
   }
 
+  // Populate the form to edit a user
   void populateForEdit(String key, String name) {
     nameController.text = name;
     setState(() {
@@ -119,9 +121,10 @@ class UserList extends StatelessWidget {
                     ),
                     IconButton(
                       icon: Icon(Icons.delete, color: Colors.red),
-                      onPressed: () => context.read<UserCrudBloc>().add(
-                        DeleteUser(user['key']),
-                      ),
+                      onPressed: () {
+                        // Dispatch Delete event
+                        context.read<UserCrudBloc>().add(DeleteUser(user['key']));
+                      },
                     ),
                   ],
                 ),

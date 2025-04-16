@@ -84,9 +84,24 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(user != null ? AuthSuccess(user: user) : AuthFailure(message: 'SMS verification failed'));
   }
 
+  // Future<void> _onSignOut(SignOutRequested event, Emitter<AuthState> emit) async {
+  //   print("User is signed out From Blog");
+  //   emit(AuthLoading());
+  //   await authService.signOut();
+  //   print("User is signed out From Blog 2 Step");
+  //   emit(AuthSignedOut());
+  //   print("User is signed out From Blog");
+  // }
+
   Future<void> _onSignOut(SignOutRequested event, Emitter<AuthState> emit) async {
+    print("User is signed out From Blog");
     emit(AuthLoading());
     await authService.signOut();
+    print("User is signed out From Blog 2 Step");
+
+    // Optional: Add a small delay before emitting AuthSignedOut
+    await Future.delayed(Duration(milliseconds: 500));
     emit(AuthSignedOut());
+    print("User is signed out From Blog");
   }
 }
