@@ -1,16 +1,22 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_db/screens/gps_update_screen.dart';
-import 'package:firebase_db/screens/login_screen.dart';
-import 'package:firebase_db/services/auth_service.dart';
+import 'package:firebase_db/screens/user_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+
+import 'blocs/user_crud/user_crud_event.dart';
 import 'firebase_options.dart';
+import 'services/auth_service.dart';
+import 'blocs/auth/auth_bloc.dart';
+import 'blocs/user_crud/user_crud_bloc.dart';
+import 'screens/login_screen.dart';
+import 'screens/gps_update_screen.dart';
+// import 'screens/user_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  print("Firebase apps count: ${Firebase.apps.length}");
-  // await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   if (Firebase.apps.isEmpty) {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   }
@@ -19,190 +25,43 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
-  final _authService = AuthService();
+  final AuthService _authService = AuthService();
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: StreamBuilder<User?>(
-        stream: _authService.authStateChanges,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return CircularProgressIndicator();
-          }
-          if (snapshot.hasData) {
-            return UserScreen(); // User logged in
-          } else {
-            return LoginScreen(); // Not logged in
-          }
-        },
+    final AuthService authService = AuthService();
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<AuthBloc>(
+          create: (_) => AuthBloc(authService: authService)..add(AuthCheckRequested()),
+        ),
+        BlocProvider<UserCrudBloc>(
+          create: (_) => UserCrudBloc()..add(LoadUsers()),
+        ),
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: AuthWrapper(),
       ),
     );
   }
 }
 
-
-// class MyApp extends StatelessWidget {
-//
-//   final Future<FirebaseApp> _initialization = Firebase.initializeApp(
-//     options: DefaultFirebaseOptions.currentPlatform,
-//   );
-//   @override
-//   // Widget build(BuildContext context) {
-//   //   return MaterialApp(title: 'Firebase CRUD', home: UserScreen());
-//   // }
-//   Widget build(BuildContext context) {
-//     return FutureBuilder(
-//       future: _initialization,
-//       builder: (context, snapshot) {
-//         // Error check
-//         if (snapshot.hasError) {
-//           print('Firebase init error: ${snapshot.error}');
-//           return MaterialApp(
-//             home: Scaffold(
-//               body: Center(child: Text('Firebase init failed')),
-//             ),
-//           );
-//         }
-//
-//         // Done initializing
-//         if (snapshot.connectionState == ConnectionState.done) {
-//           return MaterialApp(
-//             home: UserScreen(),
-//           );
-//         }
-//
-//         // Still loading
-//         return MaterialApp(
-//           home: Scaffold(
-//             body: Center(child: CircularProgressIndicator()),
-//           ),
-//         );
-//       },
-//     );
-//   }
-// }
-
-class UserScreen extends StatefulWidget {
-  @override
-  _UserScreenState createState() => _UserScreenState();
-}
-
-class _UserScreenState extends State<UserScreen> {
-  final dbRef = FirebaseDatabase.instance.ref('users');
-  final TextEditingController nameController = TextEditingController();
-  String? selectedKey;
-
-  void createUser(String name) {
-    final newUserRef = dbRef.push();
-    newUserRef.set({'name': name});
-  }
-
-  void updateUser(String key, String name) {
-    dbRef.child(key).update({'name': name});
-  }
-
-  void deleteUser(String key) {
-    dbRef.child(key).remove();
-  }
-
-  void saveUser() {
-    final name = nameController.text.trim();
-    if (name.isEmpty) return;
-
-    if (selectedKey == null) {
-      createUser(name);
-    } else {
-      updateUser(selectedKey!, name);
-    }
-
-    nameController.clear();
-    setState(() => selectedKey = null);
-  }
-
-  void populateForEdit(String key, String name) {
-    nameController.text = name;
-    setState(() {
-      selectedKey = key;
-    });
-  }
-
+class AuthWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Firebase CRUD Example')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: InputDecoration(labelText: 'Name'),
-            ),
-            const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: saveUser,
-              child: Text(selectedKey == null ? 'Create User' : 'Update User'),
-            ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: StreamBuilder(
-                stream: dbRef.onValue,
-                builder: (context, AsyncSnapshot<DatabaseEvent> snapshot) {
-                  if (snapshot.hasData &&
-                      snapshot.data!.snapshot.value != null) {
-                    Map users = snapshot.data!.snapshot.value as Map;
-                    List<Map<String, dynamic>> userList = [];
-
-                    users.forEach((key, value) {
-                      userList.add({'key': key, 'name': value['name']});
-                    });
-
-                    return ListView.builder(
-                      itemCount: userList.length,
-                      itemBuilder: (context, index) {
-                        final user = userList[index];
-                        return ListTile(
-                          title: Text(user['name']),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: Icon(Icons.edit, color: Colors.orange),
-                                onPressed:
-                                    () => populateForEdit(
-                                      user['key'],
-                                      user['name'],
-                                    ),
-                              ),
-                              IconButton(
-                                icon: Icon(Icons.delete, color: Colors.red),
-                                onPressed: () => deleteUser(user['key']),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    );
-                  } else {
-                    return Text('No users found');
-                  }
-                },
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const GpsUpdateScreen()),
-                );
-              },
-              child: Text('Go to GPS Update Screen'),
-            )
-          ],
-        ),
-      ),
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, state) {
+        if (state is AuthLoading) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        } else if (state is AuthSuccess) {
+          return UserScreen();
+        } else {
+          return LoginScreen();
+        }
+      },
     );
   }
 }
