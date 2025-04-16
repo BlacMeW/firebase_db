@@ -1,6 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_db/services/location_service.dart';
 
 class GpsUpdateScreen extends StatefulWidget {
@@ -44,25 +43,26 @@ class _GpsUpdateScreenState extends State<GpsUpdateScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text("Manual Location Update")),
       body: Center(
-        child: _loading
-            ? const CircularProgressIndicator()
-            : Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ElevatedButton.icon(
-              icon: const Icon(Icons.location_on),
-              label: const Text("Update My Location"),
-              onPressed: _updateLocation,
-            ),
-            const SizedBox(height: 20),
-            if (_status != null)
-              Text(
-                _status!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 16),
-              ),
-          ],
-        ),
+        child:
+            _loading
+                ? const CircularProgressIndicator()
+                : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.location_on),
+                      label: const Text("Update My Location"),
+                      onPressed: _updateLocation,
+                    ),
+                    const SizedBox(height: 20),
+                    if (_status != null)
+                      Text(
+                        _status!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                  ],
+                ),
       ),
     );
   }

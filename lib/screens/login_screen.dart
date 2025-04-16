@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../blocs/auth/auth_bloc.dart';
-import '../services/auth_service.dart';
-import 'user_screen.dart';  // Make sure you import your UserScreen
+import 'user_screen.dart'; // Make sure you import your UserScreen
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -24,10 +22,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (isLogin) {
       // Dispatch SignInRequested event
-      BlocProvider.of<AuthBloc>(context).add(SignInRequested(email: email, password: password));
+      BlocProvider.of<AuthBloc>(
+        context,
+      ).add(SignInRequested(email: email, password: password));
     } else {
       // Dispatch SignUpRequested event
-      BlocProvider.of<AuthBloc>(context).add(SignUpRequested(email: email, password: password));
+      BlocProvider.of<AuthBloc>(
+        context,
+      ).add(SignUpRequested(email: email, password: password));
     }
   }
 
@@ -55,7 +57,11 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             TextButton(
               onPressed: () => setState(() => isLogin = !isLogin),
-              child: Text(isLogin ? "Don't have an account? Register" : "Already have an account? Login"),
+              child: Text(
+                isLogin
+                    ? "Don't have an account? Register"
+                    : "Already have an account? Login",
+              ),
             ),
             // Add a listener to navigate on success or failure
             BlocListener<AuthBloc, AuthState>(
@@ -67,10 +73,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   );
                 } else if (state is AuthFailure) {
                   // Handle the error message display
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message)));
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text(state.message)));
                 }
               },
-              child: Container(), // Add an empty child as we don't need extra UI here
+              child:
+                  Container(), // Add an empty child as we don't need extra UI here
             ),
           ],
         ),
