@@ -117,8 +117,8 @@ class AuthService {
   // ✅ Sign Out
   Future<void> signOut() async {
     await _auth.signOut();
-    await GoogleSignIn().signOut();
-    await FacebookAuth.instance.logOut();
+    // await GoogleSignIn().signOut();
+    // await FacebookAuth.instance.logOut();
   }
 
   // ✅ Current User

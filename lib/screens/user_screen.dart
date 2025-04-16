@@ -1,25 +1,43 @@
-import 'package:firebase_db/blocs/user_crud/user_crud_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
-import '../blocs/auth/auth_bloc.dart';
-import '../blocs/user_crud/user_crud_event.dart';
-import '../blocs/user_crud/user_crud_state.dart';
+import 'package:firebase_db/blocs/user_crud/user_crud_bloc.dart';
+import 'package:firebase_db/blocs/user_crud/user_crud_event.dart';
+import 'package:firebase_db/blocs/user_crud/user_crud_state.dart';
+import 'package:firebase_db/blocs/auth/auth_bloc.dart';
 import 'gps_update_screen.dart';
+import 'login_screen.dart';
 
 class UserScreen extends StatelessWidget {
+  final GlobalKey<_UserFormState> _formKey = GlobalKey<_UserFormState>();
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Firebase CRUD Example')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            UserForm(),
-            const SizedBox(height: 20),
-            Expanded(child: UserList()),
-          ],
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state is AuthSignedOut) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const LoginScreen()),
+                (route) => false,
+          );
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(title: Text('Firebase CRUD Example')),
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              UserForm(key: _formKey),
+              const SizedBox(height: 20),
+              Expanded(
+                child: UserList(
+                  onEdit: (key, name) {
+                    _formKey.currentState?.populateForEdit(key, name);
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -27,6 +45,8 @@ class UserScreen extends StatelessWidget {
 }
 
 class UserForm extends StatefulWidget {
+  const UserForm({Key? key}) : super(key: key);
+
   @override
   _UserFormState createState() => _UserFormState();
 }
@@ -35,7 +55,6 @@ class _UserFormState extends State<UserForm> {
   final nameController = TextEditingController();
   String? selectedKey;
 
-  // Create or Update a User based on selectedKey
   void saveUser(BuildContext context) {
     final name = nameController.text.trim();
     if (name.isEmpty) return;
@@ -50,7 +69,6 @@ class _UserFormState extends State<UserForm> {
     setState(() => selectedKey = null);
   }
 
-  // Populate the form to edit a user
   void populateForEdit(String key, String name) {
     nameController.text = name;
     setState(() {
@@ -94,6 +112,10 @@ class _UserFormState extends State<UserForm> {
 }
 
 class UserList extends StatelessWidget {
+  final Function(String key, String name) onEdit;
+
+  const UserList({required this.onEdit});
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<UserCrudBloc, UserCrudState>(
@@ -115,14 +137,13 @@ class UserList extends StatelessWidget {
                   children: [
                     IconButton(
                       icon: Icon(Icons.edit, color: Colors.orange),
-                      onPressed: () => context.read<UserCrudBloc>().add(
-                        UpdateUser(user['key'], user['name']),
-                      ),
+                      onPressed: () {
+                        onEdit(user['key'], user['name']);
+                      },
                     ),
                     IconButton(
                       icon: Icon(Icons.delete, color: Colors.red),
                       onPressed: () {
-                        // Dispatch Delete event
                         context.read<UserCrudBloc>().add(DeleteUser(user['key']));
                       },
                     ),
