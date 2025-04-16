@@ -1,3 +1,6 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_db/screens/login_screen.dart';
+import 'package:firebase_db/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -7,53 +10,77 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   print("Firebase apps count: ${Firebase.apps.length}");
   // await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  // if (Firebase.apps.isEmpty) {
-  //   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  // }
+  if (Firebase.apps.isEmpty) {
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  }
 
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  final _authService = AuthService();
 
-  final Future<FirebaseApp> _initialization = Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
   @override
-  // Widget build(BuildContext context) {
-  //   return MaterialApp(title: 'Firebase CRUD', home: UserScreen());
-  // }
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: _initialization,
-      builder: (context, snapshot) {
-        // Error check
-        if (snapshot.hasError) {
-          print('Firebase init error: ${snapshot.error}');
-          return MaterialApp(
-            home: Scaffold(
-              body: Center(child: Text('Firebase init failed')),
-            ),
-          );
-        }
-
-        // Done initializing
-        if (snapshot.connectionState == ConnectionState.done) {
-          return MaterialApp(
-            home: UserScreen(),
-          );
-        }
-
-        // Still loading
-        return MaterialApp(
-          home: Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          ),
-        );
-      },
+    return MaterialApp(
+      home: StreamBuilder<User?>(
+        stream: _authService.authStateChanges,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return CircularProgressIndicator();
+          }
+          if (snapshot.hasData) {
+            return UserScreen(); // User logged in
+          } else {
+            return LoginScreen(); // Not logged in
+          }
+        },
+      ),
     );
   }
 }
+
+
+// class MyApp extends StatelessWidget {
+//
+//   final Future<FirebaseApp> _initialization = Firebase.initializeApp(
+//     options: DefaultFirebaseOptions.currentPlatform,
+//   );
+//   @override
+//   // Widget build(BuildContext context) {
+//   //   return MaterialApp(title: 'Firebase CRUD', home: UserScreen());
+//   // }
+//   Widget build(BuildContext context) {
+//     return FutureBuilder(
+//       future: _initialization,
+//       builder: (context, snapshot) {
+//         // Error check
+//         if (snapshot.hasError) {
+//           print('Firebase init error: ${snapshot.error}');
+//           return MaterialApp(
+//             home: Scaffold(
+//               body: Center(child: Text('Firebase init failed')),
+//             ),
+//           );
+//         }
+//
+//         // Done initializing
+//         if (snapshot.connectionState == ConnectionState.done) {
+//           return MaterialApp(
+//             home: UserScreen(),
+//           );
+//         }
+//
+//         // Still loading
+//         return MaterialApp(
+//           home: Scaffold(
+//             body: Center(child: CircularProgressIndicator()),
+//           ),
+//         );
+//       },
+//     );
+//   }
+// }
 
 class UserScreen extends StatefulWidget {
   @override
